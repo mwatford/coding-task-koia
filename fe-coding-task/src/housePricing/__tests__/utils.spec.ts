@@ -1,4 +1,4 @@
-import { getQuarterValuesInRange } from "../utils";
+import { getQuarterValuesInRange, isQuarterValueGreater } from "../utils";
 
 describe("getQuarterValuesInRange", () => {
   it("should return an array of quarter values for a given range", () => {
@@ -16,5 +16,19 @@ describe("getQuarterValuesInRange", () => {
     expect(() => getQuarterValuesInRange("1992K5", "1994K3")).toThrow(
       /invalid range/gi
     );
+  });
+});
+
+describe("isQuarterValueGreater", () => {
+  it("should return true if the first argument is greater", () => {
+    expect(isQuarterValueGreater("2020K3", "2020K1")).toBe(true);
+  });
+
+  it("should return false if the second argument is greater", () => {
+    expect(isQuarterValueGreater("2020K3", "2021K1")).toBe(false);
+  });
+
+  it("should return false if the arguments are the same", () => {
+    expect(isQuarterValueGreater("2020K3", "2020K3")).toBe(false);
   });
 });
