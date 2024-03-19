@@ -69,7 +69,7 @@ export const validateStartInput = (year: number, quarter: number) => {
   return true;
 };
 
-export function isDateRangeGreater(date1: string, date2: string) {
+export function isQuarterValueGreater(date1: string, date2: string) {
   const [year1, quarter1] = date1.split("K");
   const [year2, quarter2] = date2.split("K");
 
@@ -85,7 +85,7 @@ export function isDateRangeGreater(date1: string, date2: string) {
 export const validateEndInput =
   (startQuarter: string) => (year: number, quarter: number) => {
     validateCommon(year, quarter);
-    if (!isDateRangeGreater(`${year}K${quarter}`, startQuarter)) {
+    if (!isQuarterValueGreater(`${year}K${quarter}`, startQuarter)) {
       throw "Ending value should be greater than starting value.";
     }
     return true;
@@ -99,20 +99,20 @@ export function splitArrayIntoChunks<T>(arr: T[], chunkSize: number): T[][] {
   return result;
 }
 
-export const getQueryParams = (): FormInput | false => {
+export const getQueryParams = (): FormInput | null => {
   const queryParams = new URLSearchParams(window.location.search);
   const houseTypes = queryParams.get("houseTypes");
   const startQuarter = queryParams.get("start");
   const endQuarter = queryParams.get("end");
 
   if (!houseTypes || !startQuarter || !endQuarter) {
-    return false
+    return null
   }
 
   const houseTypesArr = houseTypes.split(",");
 
   if (houseTypesArr.some((el) => !Object.keys(HouseTypes).includes(el))) {
-    return false
+    return null
   }
 
   return {

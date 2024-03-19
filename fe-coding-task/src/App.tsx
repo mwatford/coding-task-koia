@@ -10,7 +10,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <HousePricing formValues={formValues || null} />
+      <HousePricing formValues={formValues} />
     </QueryClientProvider>
   );
 }

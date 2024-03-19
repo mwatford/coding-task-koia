@@ -22,7 +22,7 @@ import { useLocalStorage } from "./useLocalStorage";
 import {
   generateRandomColors,
   getQuarterValuesInRange,
-  isDateRangeGreater,
+  isQuarterValueGreater,
   updateURL,
 } from "./utils";
 import { apiClientFactory, getPostQuery } from "./apiClient";
@@ -74,7 +74,7 @@ export const HousePricing: React.FC<Props> = ({ formValues }) => {
     houseTypes,
     startQuarter,
   }: FormInput) => {
-    if (isDateRangeGreater(startQuarter, endQuarter)) {
+    if (isQuarterValueGreater(startQuarter, endQuarter)) {
       alert("Invalid range");
       return;
     }
@@ -136,7 +136,7 @@ export const HousePricing: React.FC<Props> = ({ formValues }) => {
 
   return (
     <Container>
-      <Box marginTop={2} width={'100%'}>
+      <Box marginTop={2} width={"100%"}>
         <HousingPriceChart
           labels={chartLabels}
           datasets={chartSeries}
