@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import {
   Autocomplete,
   Box,
@@ -6,7 +7,6 @@ import {
   Drawer,
   TextField,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation } from "react-query";
 import { QuarterInput } from "./QuarterInput";
@@ -20,17 +20,17 @@ import {
 } from "./housingTypes";
 import { useLocalStorage } from "./useLocalStorage";
 import {
-  apiClientFactory,
-  buildQueryBody,
   generateRandomColors,
   getQuarterValuesInRange,
   isDateRangeGreater,
-  prepareGraphData,
   updateURL,
 } from "./utils";
+import { apiClientFactory, getPostQuery } from "./apiClient";
+import { prepareGraphData } from "./dataTransform";
 
 const BASE_URL = "https://data.ssb.no/api";
 const TABLE = "07241";
+
 const apiClient = apiClientFactory(BASE_URL, "v0");
 
 const defaultValues = {
@@ -79,7 +79,7 @@ export const HousePricing: React.FC<Props> = ({ formValues }) => {
       return;
     }
 
-    const postData = buildQueryBody(
+    const postData = getPostQuery(
       houseTypes,
       getQuarterValuesInRange(startQuarter, endQuarter)
     );

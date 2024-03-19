@@ -1,4 +1,3 @@
-import { Axios } from "axios";
 import { ApiHouseTypes, FormInput, HouseTypes } from "./housingTypes";
 
 export function getQuarterValuesInRange(start: string, end: string): string[] {
@@ -43,47 +42,6 @@ export const generateRandomColors = (count: number) => {
 
   return result;
 };
-
-export function apiClientFactory(baseURL: string, apiVersion: string) {
-  return new Axios({
-    baseURL: `${baseURL}/${apiVersion}/no/table/`,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
-export function buildQueryBody(
-  filterTypes: ApiHouseTypes[],
-  selectedQuarters: string[]
-) {
-  return JSON.stringify({
-    query: [
-      {
-        code: "Boligtype",
-        selection: {
-          filter: "item",
-          values: filterTypes,
-        },
-      },
-      {
-        code: "ContentsCode",
-        selection: {
-          filter: "item",
-          values: ["KvPris"],
-        },
-      },
-      {
-        code: "Tid",
-        selection: {
-          filter: "item",
-          values: selectedQuarters,
-        },
-      },
-    ],
-    response: {
-      format: "json-stat2",
-    },
-  });
-}
 
 export function validateCommon(year: number, quarter: number) {
   const YEAR_LIMIT = 2009;
@@ -154,7 +112,7 @@ export const getQueryParams = (): FormInput | false => {
   const houseTypesArr = houseTypes.split(",");
 
   if (houseTypesArr.some((el) => !Object.keys(HouseTypes).includes(el))) {
-    throw false
+    return false
   }
 
   return {
@@ -170,38 +128,4 @@ export const updateURL = (start: string, end: string, houseTypes: string[]) => {
   currentURL.searchParams.set("end", end);
   currentURL.searchParams.set("houseTypes", houseTypes.join(","));
   window.history.replaceState({}, "", currentURL);
-};
-
-export const prepareGraphData = (data: string) => {
-  const { dimension, value } = JSON.parse(data);
-
-  const labels = Object.values(
-    dimension["Tid"]["category"]["label"]
-  ) as string[];
-
-  const categories = dimension.Boligtype.category.index as Record<
-    ApiHouseTypes,
-    number
-  >;
-
-  const sortedCategoryNames = (
-    Object.entries(categories) as [ApiHouseTypes, number][]
-  )
-    .sort(([_keyA, valA], [_keyB, valB]) => valA - valB)
-    .map(([houseType]) => HouseTypes[houseType]?.label);
-
-  if (value.length % sortedCategoryNames.length !== 0) {
-    throw "error in data";
-  }
-  const chunks = splitArrayIntoChunks(
-    value,
-    value.length / sortedCategoryNames.length
-  ) as number[][];
-
-  const datasets = chunks.map((el, index) => ({
-    data: el,
-    label: sortedCategoryNames[index],
-  }));
-
-  return { datasets, labels };
 };
