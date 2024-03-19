@@ -6,12 +6,18 @@ import {
   Drawer,
   TextField,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useMutation } from "react-query";
 import { QuarterInput } from "./QuarterInput";
 import { SearchHistory } from "./SearchHistory";
 import { HousingPriceChart } from "./housingPriceChart";
-import { ApiHouseTypes, FormInput, HouseTypes } from "./housingTypes";
+import {
+  ApiHouseTypes,
+  FormInput,
+  HistoryType,
+  HouseTypes,
+} from "./housingTypes";
 import { useLocalStorage } from "./useLocalStorage";
 import {
   apiClientFactory,
@@ -21,8 +27,6 @@ import {
   isDateRangeGreater,
   prepareGraphData,
   updateURL,
-  validateEndInput,
-  validateStartInput,
 } from "./utils";
 
 const BASE_URL = "https://data.ssb.no/api";
@@ -38,7 +42,7 @@ const defaultValues = {
 const LS_HISTORY_KEY = "search-history";
 
 interface Props {
-  formValues?: FormInput;
+  formValues?: FormInput | null;
 }
 
 export const HousePricing: React.FC<Props> = ({ formValues }) => {
@@ -47,17 +51,41 @@ export const HousePricing: React.FC<Props> = ({ formValues }) => {
   >([]);
   const [chartLabels, setChartLabels] = useState<string[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [history, setHistory] = useLocalStorage<
-    Array<FormInput & { date: string }>
-  >(LS_HISTORY_KEY, []);
+  const [history, setHistory] = useLocalStorage<HistoryType>(
+    LS_HISTORY_KEY,
+    []
+  );
+  const { data, mutate } = useMutation(async (postData: string) => {
+    const { data } = await apiClient.post(TABLE, postData);
+    return data;
+  });
+
+  const { setValue, getValues, handleSubmit, register } = useForm<FormInput>({
+    defaultValues: formValues ?? defaultValues,
+  });
 
   const options = Object.entries(HouseTypes).map(([key, { label }]) => ({
     apiType: key as ApiHouseTypes,
     label,
   }));
-  const { setValue, getValues, handleSubmit, register } = useForm<FormInput>({
-    defaultValues: formValues ?? defaultValues,
-  });
+
+  const submitData = async ({
+    endQuarter,
+    houseTypes,
+    startQuarter,
+  }: FormInput) => {
+    if (isDateRangeGreater(startQuarter, endQuarter)) {
+      alert("Invalid range");
+      return;
+    }
+
+    const postData = buildQueryBody(
+      houseTypes,
+      getQuarterValuesInRange(startQuarter, endQuarter)
+    );
+
+    mutate(postData);
+  };
 
   const afterSubmit = () => {
     const { endQuarter, houseTypes, startQuarter } = getValues();
@@ -78,35 +106,12 @@ export const HousePricing: React.FC<Props> = ({ formValues }) => {
     }
   };
 
-  const submitData = async ({
-    endQuarter,
-    houseTypes,
-    startQuarter,
-  }: FormInput) => {
+  const onSubmit = async (postData: FormInput) => {
     try {
-      if (isDateRangeGreater(startQuarter, endQuarter)) {
-        alert("Invalid range");
-        return;
-      }
-      const body = buildQueryBody(
-        houseTypes,
-        getQuarterValuesInRange(startQuarter, endQuarter)
-      );
-
-      const { data } = await apiClient.post(TABLE, body);
-      const { datasets, labels } = prepareGraphData(data);
-
-      setChartSeries(datasets);
-      setChartLabels(labels);
-    } catch (error) {
-      alert("something went wrong, try again later");
-    }
+      await submitData(postData);
+      afterSubmit();
+    } catch (error) {}
   };
-
-  const onSubmit = async (data: FormInput) => {
-    await submitData(data)
-    afterSubmit()
-  }
 
   const colors = useMemo(
     () => generateRandomColors(chartSeries.length),
@@ -117,15 +122,29 @@ export const HousePricing: React.FC<Props> = ({ formValues }) => {
     setHistoryOpen(newOpen);
   };
 
+  useEffect(() => {
+    if (data) {
+      const { datasets, labels } = prepareGraphData(data);
+      setChartSeries(datasets);
+      setChartLabels(labels);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (formValues) submitData(formValues);
+  }, [formValues]);
+
   return (
     <Container>
-      <HousingPriceChart
-        labels={chartLabels}
-        datasets={chartSeries}
-        colors={colors}
-        xLabel="Quarters"
-        yLabel="Cost per square meter"
-      />
+      <Box marginTop={2} width={'100%'}>
+        <HousingPriceChart
+          labels={chartLabels}
+          datasets={chartSeries}
+          colors={colors}
+          xLabel="Quarters"
+          yLabel="Cost per square meter"
+        />
+      </Box>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Box
           display="flex"
@@ -134,6 +153,7 @@ export const HousePricing: React.FC<Props> = ({ formValues }) => {
           alignItems="start"
           width="100%"
           gap={2}
+          marginTop={2}
         >
           <Autocomplete
             {...register("houseTypes", {
@@ -157,13 +177,11 @@ export const HousePricing: React.FC<Props> = ({ formValues }) => {
           <QuarterInput
             label="From"
             minYear={2009}
-            validate={validateStartInput}
             setValue={(quarter) => setValue("startQuarter", quarter)}
           />
           <QuarterInput
             label="To"
             minYear={2009}
-            validate={validateEndInput(getValues("startQuarter"))}
             setValue={(quarter) => setValue("endQuarter", quarter)}
           />
         </Box>
@@ -179,6 +197,7 @@ export const HousePricing: React.FC<Props> = ({ formValues }) => {
         Open history
       </Button>
       <Drawer
+        sx={{ maxHeight: "30vh", overflowY: "scroll" }}
         anchor={"bottom"}
         open={historyOpen}
         onClose={toggleDrawer(false)}

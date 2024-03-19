@@ -19,3 +19,5 @@ export interface FormInput {
   startQuarter: string;
   endQuarter: string;
 }
+
+export type HistoryType = Array<FormInput & { date: string }>

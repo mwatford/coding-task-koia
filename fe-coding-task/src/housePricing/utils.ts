@@ -141,20 +141,20 @@ export function splitArrayIntoChunks<T>(arr: T[], chunkSize: number): T[][] {
   return result;
 }
 
-export const getQueryParams = (): FormInput => {
+export const getQueryParams = (): FormInput | false => {
   const queryParams = new URLSearchParams(window.location.search);
   const houseTypes = queryParams.get("houseTypes");
   const startQuarter = queryParams.get("start");
   const endQuarter = queryParams.get("end");
 
   if (!houseTypes || !startQuarter || !endQuarter) {
-    throw "Missing values in url";
+    return false
   }
 
   const houseTypesArr = houseTypes.split(",");
 
   if (houseTypesArr.some((el) => !Object.keys(HouseTypes).includes(el))) {
-    throw "Invalid house types in url";
+    throw false
   }
 
   return {

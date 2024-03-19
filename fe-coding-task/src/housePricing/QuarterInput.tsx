@@ -1,17 +1,11 @@
-import {
-  Box,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select
-} from "@mui/material";
+import { Box, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
 interface Props {
   label: string;
   minYear: number;
   setValue: (input: string) => void;
-  validate: (year: number, quarter: number) => boolean;
+  validate?: (year: number, quarter: number) => boolean;
   disabled?: boolean;
 }
 
@@ -39,10 +33,11 @@ export function QuarterInput({
 
   useEffect(() => {
     try {
-      if (year && quarter) {
-        setValue(computedQuarterValue);
-        validate(parseInt(year), parseInt(quarter));
-      }
+      if (!year || !quarter) return;
+      if (!validate) return setValue(computedQuarterValue);
+
+      setValue(computedQuarterValue);
+      validate(parseInt(year), parseInt(quarter));
       setError("");
     } catch (error) {
       setError(error as string);

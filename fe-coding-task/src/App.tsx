@@ -1,14 +1,18 @@
 import "./App.css";
 import { HousePricing } from "./housePricing/HousePricing";
 import { getQueryParams } from "./housePricing/utils";
+import { QueryClient, QueryClientProvider } from "react-query";
+
+const queryClient = new QueryClient();
 
 function App() {
-  try {
-    const formValues = getQueryParams();
-    return <HousePricing formValues={formValues} />;
-  } catch (error) {
-    return <HousePricing />;
-  }
+  const formValues = getQueryParams();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <HousePricing formValues={formValues || null} />
+    </QueryClientProvider>
+  );
 }
 
 export default App;

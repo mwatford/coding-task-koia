@@ -1,13 +1,15 @@
 import { Box } from "@mui/material";
-import { FormInput } from "./housingTypes";
+import { HistoryType } from "./housingTypes";
 
-export const SearchHistory: React.FC<{ history: FormInput[] }> = ({
+export const SearchHistory: React.FC<{ history: HistoryType }> = ({
   history,
 }) => {
   return (
-    <Box sx={{ marginX: 2 }}>
+    <Box sx={{ margin: 2, maxHeight: "30vh" }}>
       {history.map((el) => (
-        <p>{JSON.stringify(el)}</p>
+        <p key={el.date} style={{ wordWrap: "break-word" }}>
+          {JSON.stringify(el)}
+        </p>
       ))}
     </Box>
   );
